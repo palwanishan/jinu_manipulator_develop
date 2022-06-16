@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(jinu_manipulator_control)
 
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 FIND_PACKAGE(Eigen3 REQUIRED)
 
@@ -21,7 +21,7 @@ link_directories(${GAZEBO_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS} ${PCL_LIBRARY_DIRS} ${EIGEN3_INCLUDE_DIR})
 
 add_library(${PROJECT_NAME} src/jm_simple.cc)
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES} ${EIGEN3_INCLUDE_DIR})
 
 include_directories(
   include
