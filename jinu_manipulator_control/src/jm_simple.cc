@@ -42,6 +42,9 @@ namespace gazebo
     pub_joint_state = node_handle.advertise<sensor_msgs::JointState>("jinu_manipulator/joint_states", 100);
     sub_mode_selector = node_handle.subscribe("jinu_manipulator/mode_selector", 1, &gazebo::JM_simple::SwitchMode, this); 
     sub_open_manipulator_joint_state = node_handle.subscribe("joint_states", 1, &gazebo::JM_simple::OMJointStatesCallback, this); 
+
+    pub_ee_pose = node_handle.advertise<geometry_msgs::TransformStamped>("jinu_manipulator/ee_pose", 10);
+    pub_ref_ee_pose = node_handle.advertise<geometry_msgs::TransformStamped>("jinu_manipulator/ref_ee_pose", 10);
   }
 
 
@@ -81,6 +84,33 @@ namespace gazebo
       joint_state_msg.effort.push_back((float)joint_torque[i]);
     }
     pub_joint_state.publish(joint_state_msg); 
+
+
+    geometry_msgs::TransformStamped tf_msg;
+
+    tf_msg.header.stamp = ros::Time::now();
+    ee_quaternion = ee_rotation;
+    tf_msg.transform.translation.x = ee_position(0);
+    tf_msg.transform.translation.y = ee_position(1);
+    tf_msg.transform.translation.z = ee_position(2);
+    tf_msg.transform.rotation.x = ee_quaternion.x();
+    tf_msg.transform.rotation.y = ee_quaternion.y();
+    tf_msg.transform.rotation.z = ee_quaternion.z();
+    tf_msg.transform.rotation.w = ee_quaternion.w();
+
+    pub_ee_pose.publish(tf_msg); 
+
+    tf_msg.header.stamp = ros::Time::now();
+    ref_ee_quaternion = ref_ee_rotation;
+    tf_msg.transform.translation.x = ref_ee_position(0);
+    tf_msg.transform.translation.y = ref_ee_position(1);
+    tf_msg.transform.translation.z = ref_ee_position(2);
+    tf_msg.transform.rotation.x = ref_ee_quaternion.x();
+    tf_msg.transform.rotation.y = ref_ee_quaternion.y();
+    tf_msg.transform.rotation.z = ref_ee_quaternion.z();
+    tf_msg.transform.rotation.w = ref_ee_quaternion.w();
+
+    pub_ref_ee_pose.publish(tf_msg); 
   }
 
 

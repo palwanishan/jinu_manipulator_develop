@@ -20,6 +20,8 @@
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/Quaternion.h>
 #include <std_msgs/Int32.h>
+#include <tf2_msgs/TFMessage.h>
+#include <geometry_msgs/TransformStamped.h>
 
 using gazebo::physics::ModelPtr;
 using gazebo::physics::LinkPtr;
@@ -103,10 +105,11 @@ namespace gazebo
     Vector3d ee_rotation_x, ee_rotation_y, ee_rotation_z, ref_ee_rotation_x, ref_ee_rotation_y, ref_ee_rotation_z;
     Vector3d ee_orientation_error, ee_force, ee_momentum;
 
-    MatrixXd ee_rotation = MatrixXd::Zero(3,3);
-    MatrixXd ref_ee_rotation = MatrixXd::Zero(3,3);
+    Matrix3d ee_rotation;
+    Matrix3d ref_ee_rotation;
 
-    Quaterniond ref_ee_quaternion;
+    Quaterniond ref_ee_quaternion;  
+    Quaterniond ee_quaternion;  
 
     VectorXd th = VectorXd::Zero(6);
     VectorXd ref_th = VectorXd::Zero(6);
@@ -143,6 +146,8 @@ namespace gazebo
     ros::Publisher pub_joint_state;
     ros::Subscriber sub_mode_selector;
     ros::Subscriber sub_open_manipulator_joint_state;
+    ros::Publisher pub_ee_pose;
+    ros::Publisher pub_ref_ee_pose;
 
     std::vector<double> present_joint_angle_;
 
