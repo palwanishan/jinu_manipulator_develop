@@ -1,0 +1,50 @@
+<launch>
+  <!-- These are the arguments you can pass this launch file, for example paused:=true -->
+  <arg name="gui" default="true"/>
+  <arg name="paused" default="true"/>
+  <arg name="use_sim_time" default="true"/>
+
+  <rosparam file="$(find jinu_manipulator_gazebo)/config/arm_controller.yaml" command="load"/>
+  
+  
+  <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find jinu_manipulator_gazebo)/worlds/gazebo.world"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+  </include>
+  
+  <!--
+  <node
+    name="spawn_model"
+    pkg="gazebo_ros"
+    type="spawn_model"
+    args="-file $(find jinu_manipulator_description)/urdf/model.sdf -sdf -model jinu_manipulator2"
+    output="screen" />
+  -->
+
+  <!-- Load libjinu_manipulator_control.so -->
+  <!-- load the controllers -->
+  
+  <!--
+  <node 
+    name="controller_spawner" 
+    pkg="controller_manager" 
+    type="spawner" 
+    respawn="false"
+    output="screen" 
+    args="joint1_position
+          joint2_position
+          joint3_position
+          joint4_position
+          joint5_position
+          joint6_position
+          gripper_position
+          gripper_sub_position"/>
+  -->
+  <node
+    name="fake_joint_calibration"
+    pkg="rostopic"
+    type="rostopic"
+    args="pub /calibrated std_msgs/Bool true" />
+</launch>

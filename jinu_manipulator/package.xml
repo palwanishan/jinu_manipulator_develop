@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>jinu_manipulator</name>
+  <version>1.0.0</version>
+  <description>
+    JinuManipulator is ROS-enabled robot arm designed and build by Jin Woo and Palwan Ishan in collaboration with HRRLab.
+  </description>
+  <license>Apache 2.0</license>
+  <author email="palwanishan@gmail.com">Palwan Ishan</author>
+  <author email="realfrd@gmail.com">Jin Woo</author>
+  <maintainer email="palwanishan@gmail.com">Palwan Ishan</maintainer>
+  <url type="website">TODO</url>
+  <url type="emanual">TODO</url>
+  <url type="repository">TODO</url>
+  <url type="bugtracker">TODO</url>
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>jinu_manipulator_description</exec_depend>
+<!-- 
+  <exec_depend>jinu_manipulator_control_gui</exec_depend>
+  <exec_depend>jinu_manipulator_controller</exec_depend>  
+  <exec_depend>jinu_manipulator_libs</exec_depend>
+  <exec_depend>jinu_manipulator_teleop</exec_depend>
+  <export><metapackage/></export>
+-->
+</package>

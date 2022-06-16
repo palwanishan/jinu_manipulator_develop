@@ -1,0 +1,24 @@
+#!/bin/bash
+
+echo ""
+echo "This script copy the 'jinu_manipulator_description/urdf/jinu_manipulator.sdf' to  "
+echo "                    '~/.gazebo/models/jinu_manipulator_description/model.sdf'     "
+echo ""
+echo "This script copy the 'jinu_manipulator_description/config/jinu_manipulator.config' to "
+echo "                      '~/.gazebo/models/jinu_manipulator_description/model.config'    "
+echo ""
+echo "This script copy the 'jinu_manipulator_description/meshes' to "
+echo "    '~/.gazebo/models/jinu_manipulator_description/meshes'    "
+echo ""
+echo "to facilitate bringing up the 'jinu_manipulator' gazebo model."
+echo ""
+
+cp `rospack find jinu_manipulator_description`/urdf/jinu_manipulator.sdf ~/.gazebo/models/jinu_manipulator_description/model.sdf
+
+cp `rospack find jinu_manipulator_description`/config/jinu_manipulator.config ~/.gazebo/models/jinu_manipulator_description/model.config
+
+cp -r `rospack find jinu_manipulator_description`/meshes/ ~/.gazebo/models/jinu_manipulator_description/meshes/
+
+echo ""
+echo "Ready!"
+echo ""

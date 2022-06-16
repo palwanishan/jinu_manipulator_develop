@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>jinu_manipulator_description</name>
+  <version>1.0.0</version>
+  <description>JinuManipulator 3D model description for visualization and simulation</description>
+  <license>Apache 2.0</license>
+  <author email="palwanishan@gmail.com">Palwan Ishan</author>
+  <author email="realfcn@gmail.com">Jin Woo</author>
+  <maintainer email="palwanishan@gmail.com">Palwan Ishan</maintainer>
+  <url type="website">TODO</url>
+  <url type="emanual">TODO</url>
+  <url type="repository">TODO</url>
+  <url type="bugtracker">TODO</url>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>joint_state_publisher</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>xacro</depend>
+  <depend>urdf</depend>
+</package>

@@ -1,0 +1,4 @@
+<launch>
+  <param name="robot_description"
+         command="$(find xacro)/xacro --inorder '$(find jinu_manipulator_description)/urdf/jinu_manipulator_robot.urdf.xacro'"/>
+</launch>
