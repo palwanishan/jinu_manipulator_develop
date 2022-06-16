@@ -34,6 +34,10 @@ namespace gazebo
     this->Joint4 = this->model->GetJoint("joint4");
     this->Joint5 = this->model->GetJoint("joint5");
     this->Joint6 = this->model->GetJoint("joint6");
+
+
+    this->gripper = this->model->GetJoint("gripper");
+    this->gripper_sub = this->model->GetJoint("gripper_sub");
   }
 
 
@@ -57,7 +61,8 @@ namespace gazebo
     EncoderRead();               
     ROSMsgPublish();
     PostureGeneration();
-    JointController();          
+    JointController();      
+    GripperControl();    
   }
 
 
@@ -433,5 +438,23 @@ namespace gazebo
 
     om_ee_position = om_T06.block<3,1>(0,3);
     om_ee_rotation = om_T06.block<3,3>(0,0);
+  }
+
+
+  void JM_simple::GripperControl()
+  {
+    VectorXd gripper_th(2), ref_gripper_th(2);
+
+    gripper_th[0] = this->gripper->Position(1);
+    gripper_th[1] = this->gripper_sub->Position(1);
+
+    ref_gripper_th[0] = 0;
+    ref_gripper_th[1] = 0;
+
+    joint_torque[6] = 10 * (ref_gripper_th[0] - gripper_th[0]);
+    joint_torque[7] = 10 * (ref_gripper_th[1] - gripper_th[1]);
+
+    this->gripper->SetForce(1, joint_torque(6));
+    this->gripper_sub->SetForce(1, joint_torque(7));
   }
 }

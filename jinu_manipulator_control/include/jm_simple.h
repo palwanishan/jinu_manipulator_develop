@@ -88,6 +88,9 @@ namespace gazebo
     LinkPtr Base, Link1, Link2, Link3, Link4, Link5, Link6;
     JointPtr Joint1, Joint2, Joint3, Joint4, Joint5, Joint6;
 
+    LinkPtr gripper_link, gripper_link_sub;
+    JointPtr gripper, gripper_sub;
+
     const std::vector<std::string> joint_names = {"joint1", "joint2", "joint3", "joint4", "joint5", "joint6"};
 
     common::Time last_update_time;
@@ -130,7 +133,7 @@ namespace gazebo
     MatrixXd Jacobian = MatrixXd::Zero(6,6);    
     VectorXd J1 = VectorXd::Zero(6); VectorXd J2 = VectorXd::Zero(6); VectorXd J3 = VectorXd::Zero(6);
     VectorXd J4 = VectorXd::Zero(6); VectorXd J5 = VectorXd::Zero(6); VectorXd J6 = VectorXd::Zero(6); 
-    VectorXd joint_torque = VectorXd::Zero(6);
+    VectorXd joint_torque = VectorXd::Zero(8);
     VectorXd virtual_spring = VectorXd::Zero(6);
 
     // Temporary variables
@@ -177,6 +180,7 @@ namespace gazebo
     void Motion2();
     void SwitchMode(const std_msgs::Int32Ptr & msg);
     void OMJointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg);
+    void GripperControl();
   };
   GZ_REGISTER_MODEL_PLUGIN(JM_simple);
 }
