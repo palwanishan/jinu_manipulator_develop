@@ -138,7 +138,7 @@ namespace gazebo
       ref_th[5] =   0 * trajectory * deg2rad; 
     }
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 6; i++) {
       joint_torque[i] = gain_p_joint_space[i] * (ref_th[i] - th[i]) - gain_d_joint_space[i] * th_dot[i];
     }
   }
@@ -146,12 +146,12 @@ namespace gazebo
 
   void JM_simple::Motion1()
   {      
-    gain_p << 500, 500, 500;
-    gain_d << 1, 10, 10;
+    gain_p << 100, 100, 100;
+    //gain_d << 1, 1, 1;
     gain_w << 10, 10, 10;
 
     step_time = 6;
-
+    
     cnt_time = cnt*inner_dt;   
 
     A0 << 1, 0, 0, 0,
@@ -215,10 +215,12 @@ namespace gazebo
     Jacobian << J1, J2, J3, J4, J5, J6;
 
     ee_position << T06(0,3), T06(1,3), T06(2,3);
-    ee_velocity = (ee_position - pre_ee_position) / inner_dt;
-    pre_ee_position = ee_position;
-
-    if (cnt<2) initial_ee_position << ee_position(0), ee_position(1), ee_position(2);    
+    
+    // if (cnt<1) pre_ee_position = ee_position; 
+    // ee_velocity = (ee_position - pre_ee_position) / inner_dt;
+    // pre_ee_position = ee_position;
+    
+    if (cnt<1) initial_ee_position << ee_position(0), ee_position(1), ee_position(2);    
 
     if(cnt_time <= step_time*100)
     { 
@@ -228,9 +230,9 @@ namespace gazebo
       ref_ee_quaternion.w() = qw; ref_ee_quaternion.x() = qx; ref_ee_quaternion.y() = qy; ref_ee_quaternion.z() = qz;      
     }
 
-    ee_force(0) = gain_p(0) * (ref_ee_position(0) - ee_position(0)) - gain_d(0) * ee_velocity(0);
-    ee_force(1) = gain_p(1) * (ref_ee_position(1) - ee_position(1)) - gain_d(1) * ee_velocity(1);
-    ee_force(2) = gain_p(2) * (ref_ee_position(2) - ee_position(2)) - gain_d(2) * ee_velocity(2);
+    ee_force(0) = gain_p(0) * (ref_ee_position(0) - ee_position(0)); //- gain_d(0) * ee_velocity(0);
+    ee_force(1) = gain_p(1) * (ref_ee_position(1) - ee_position(1)); //- gain_d(1) * ee_velocity(1);
+    ee_force(2) = gain_p(2) * (ref_ee_position(2) - ee_position(2)); //- gain_d(2) * ee_velocity(2);
 
     ee_rotation = T06.block<3,3>(0,0);
     ee_rotation_x = ee_rotation.block<3,1>(0,0); 
@@ -247,7 +249,7 @@ namespace gazebo
     virtual_spring << ee_force(0), ee_force(1), ee_force(2), ee_momentum(0), ee_momentum(1), ee_momentum(2);
 
     joint_torque = Jacobian.transpose() * virtual_spring;
-        
+    
     cnt++;
   }
 
