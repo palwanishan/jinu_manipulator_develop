@@ -48,7 +48,6 @@ namespace gazebo
 
     pub_ee_pose = node_handle.advertise<geometry_msgs::TransformStamped>("jinu_manipulator/ee_pose", 10);
     pub_ref_ee_pose = node_handle.advertise<geometry_msgs::TransformStamped>("jinu_manipulator/ref_ee_pose", 10);
-
   }
 
 
@@ -184,7 +183,7 @@ namespace gazebo
   void JM_simple::Motion1()
   {      
     gain_p << 100, 100, 100;
-    //gain_d << 1, 1, 1;
+    gain_d << 1, 1, 1;
     gain_w << 10, 10, 10;
 
     step_time = 6;
@@ -253,9 +252,9 @@ namespace gazebo
 
     ee_position << T06(0,3), T06(1,3), T06(2,3);
     
-    // if (cnt<1) pre_ee_position = ee_position; 
-    // ee_velocity = (ee_position - pre_ee_position) / inner_dt;
-    // pre_ee_position = ee_position;
+    if (cnt<1) pre_ee_position = ee_position; 
+    ee_velocity = (ee_position - pre_ee_position) / inner_dt;
+    pre_ee_position = ee_position;
     
     if (cnt<1) initial_ee_position << ee_position(0), ee_position(1), ee_position(2);    
 
@@ -267,9 +266,9 @@ namespace gazebo
       ref_ee_quaternion.w() = qw; ref_ee_quaternion.x() = qx; ref_ee_quaternion.y() = qy; ref_ee_quaternion.z() = qz;      
     }
 
-    ee_force(0) = gain_p(0) * (ref_ee_position(0) - ee_position(0)); //- gain_d(0) * ee_velocity(0);
-    ee_force(1) = gain_p(1) * (ref_ee_position(1) - ee_position(1)); //- gain_d(1) * ee_velocity(1);
-    ee_force(2) = gain_p(2) * (ref_ee_position(2) - ee_position(2)); //- gain_d(2) * ee_velocity(2);
+    ee_force(0) = gain_p(0) * (ref_ee_position(0) - ee_position(0))- gain_d(0) * ee_velocity(0);
+    ee_force(1) = gain_p(1) * (ref_ee_position(1) - ee_position(1))- gain_d(1) * ee_velocity(1);
+    ee_force(2) = gain_p(2) * (ref_ee_position(2) - ee_position(2))- gain_d(2) * ee_velocity(2);
 
     ee_rotation = T06.block<3,3>(0,0);
     ee_rotation_x = ee_rotation.block<3,1>(0,0); 
@@ -464,9 +463,11 @@ namespace gazebo
     ee_velocity = (ee_position - pre_ee_position) / dt;
     pre_ee_position = ee_position;
 
-    ee_force(0) = gain_p(0) * (pre_ee_position(0) - ee_position(0)) - gain_d(0) * ee_velocity(0);
-    ee_force(1) = gain_p(1) * (pre_ee_position(1) - ee_position(1)) - gain_d(1) * ee_velocity(1);
-    ee_force(2) = gain_p(2) * (pre_ee_position(2) - ee_position(2)) - gain_d(2) * ee_velocity(2);
+    ref_ee_position = hmd_position;
+
+    ee_force(0) = gain_p(0) * (ref_ee_position(0) - ee_position(0)) - gain_d(0) * ee_velocity(0);
+    ee_force(1) = gain_p(1) * (ref_ee_position(1) - ee_position(1)) - gain_d(1) * ee_velocity(1);
+    ee_force(2) = gain_p(2) * (ref_ee_position(2) - ee_position(2)) - gain_d(2) * ee_velocity(2);
 
     ee_rotation = T06.block<3,3>(0,0);
     ee_rotation_x = ee_rotation.block<3,1>(0,0); 
@@ -556,19 +557,23 @@ namespace gazebo
     ref_gripper_th[0] = 0;
     ref_gripper_th[1] = 0;
 
-    joint_torque[6] = 10 * (ref_gripper_th[0] - gripper_th[0]);
-    joint_torque[7] = 10 * (ref_gripper_th[1] - gripper_th[1]);
+    gripper_torque[0] = 10 * (ref_gripper_th[0] - gripper_th[0]);
+    gripper_torque[1] = 10 * (ref_gripper_th[1] - gripper_th[1]);
 
-    this->gripper->SetForce(1, joint_torque(6));
-    this->gripper_sub->SetForce(1, joint_torque(7));
+    this->gripper->SetForce(1, gripper_torque(0));
+    this->gripper_sub->SetForce(1, gripper_torque(1));
   }
 
 
-  void JM_simple::HMDTFCallback(const geometry_msgs::TransformStamped::ConstPtr &msg)
+  void JM_simple::HMDTFCallback(const geometry_msgs::PoseStamped::ConstPtr &msg)
   {
-    hmd_quaternion.x() = msg->transform.rotation.x;
-    hmd_quaternion.y() = msg->transform.rotation.y;
-    hmd_quaternion.z() = msg->transform.rotation.z;
-    hmd_quaternion.w() = msg->transform.rotation.w;
+    hmd_position.x() = msg->pose.position.x;
+    hmd_position.y() = msg->pose.position.y;
+    hmd_position.z() = msg->pose.position.z;
+
+    hmd_quaternion.x() = msg->pose.orientation.x;
+    hmd_quaternion.y() = msg->pose.orientation.y;
+    hmd_quaternion.z() = msg->pose.orientation.z;
+    hmd_quaternion.w() = msg->pose.orientation.w;
   }
 }

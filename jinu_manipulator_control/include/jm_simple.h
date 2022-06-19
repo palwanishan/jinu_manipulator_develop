@@ -22,6 +22,7 @@
 #include <std_msgs/Int32.h>
 #include <tf2_msgs/TFMessage.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 
 using gazebo::physics::ModelPtr;
 using gazebo::physics::LinkPtr;
@@ -100,7 +101,7 @@ namespace gazebo
     double time = 0;
     double trajectory;
 
-    Vector3d ee_position, ee_velocity, pre_ee_position, ref_ee_position, initial_ee_position;
+    Vector3d ee_position, ee_velocity, pre_ee_position, ref_ee_position, initial_ee_position, hmd_position;
     Vector3d gain_p, gain_d, gain_w;
     VectorXd gain_p_joint_space = VectorXd(6);
     VectorXd gain_d_joint_space = VectorXd(6);
@@ -113,7 +114,6 @@ namespace gazebo
 
     Quaterniond ref_ee_quaternion;  
     Quaterniond ee_quaternion;  
-
     Quaterniond hmd_quaternion;
 
     VectorXd th = VectorXd::Zero(6);
@@ -135,7 +135,8 @@ namespace gazebo
     MatrixXd Jacobian = MatrixXd::Zero(6,6);    
     VectorXd J1 = VectorXd::Zero(6); VectorXd J2 = VectorXd::Zero(6); VectorXd J3 = VectorXd::Zero(6);
     VectorXd J4 = VectorXd::Zero(6); VectorXd J5 = VectorXd::Zero(6); VectorXd J6 = VectorXd::Zero(6); 
-    VectorXd joint_torque = VectorXd::Zero(8);
+    VectorXd joint_torque = VectorXd::Zero(6);
+    VectorXd gripper_torque = VectorXd::Zero(2);
     VectorXd virtual_spring = VectorXd::Zero(6);
 
     // Temporary variables
@@ -186,7 +187,7 @@ namespace gazebo
     void SwitchMode(const std_msgs::Int32Ptr & msg);
     void OMJointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg);
     void GripperControl();
-    void HMDTFCallback(const geometry_msgs::TransformStamped::ConstPtr &msg);
+    void HMDTFCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
   };
   GZ_REGISTER_MODEL_PLUGIN(JM_simple);
 }
