@@ -114,6 +114,8 @@ namespace gazebo
     Quaterniond ref_ee_quaternion;  
     Quaterniond ee_quaternion;  
 
+    Quaterniond hmd_quaternion;
+
     VectorXd th = VectorXd::Zero(6);
     VectorXd ref_th = VectorXd::Zero(6);
     VectorXd last_th = VectorXd::Zero(6);
@@ -151,6 +153,7 @@ namespace gazebo
     ros::Subscriber sub_open_manipulator_joint_state;
     ros::Publisher pub_ee_pose;
     ros::Publisher pub_ref_ee_pose;
+    ros::Subscriber sub_hmd_tf; 
 
     std::vector<double> present_joint_angle_;
 
@@ -160,7 +163,8 @@ namespace gazebo
     {
       IDLE = 0,
       Motion_1,
-      Motion_2
+      Motion_2,
+      Motion_3
     };
     enum ControlMode control_mode;
 
@@ -178,9 +182,11 @@ namespace gazebo
     void Idle();
     void Motion1();
     void Motion2();
+    void Motion3();
     void SwitchMode(const std_msgs::Int32Ptr & msg);
     void OMJointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg);
     void GripperControl();
+    void HMDTFCallback(const geometry_msgs::TransformStamped::ConstPtr &msg);
   };
   GZ_REGISTER_MODEL_PLUGIN(JM_simple);
 }
