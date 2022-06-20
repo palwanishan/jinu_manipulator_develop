@@ -182,8 +182,7 @@ namespace gazebo
   //  Infinity Drawer
   void JM_simple::Motion1()
   {      
-    gain_p << 600, 600, 600;
-    //gain_d << 1, 1, 1;
+    gain_p << 100, 100, 100;
     gain_w << 10, 10, 10;
 
     step_time = 6;
@@ -288,11 +287,37 @@ namespace gazebo
     gravity_compensation[4] = 0.056114*cos(th[5] + 1.5708)*sin(th[4] + 1.5708)*(cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])));
     gravity_compensation[5] = 0.056114*cos(th[5] + 1.5708)*(1.0*sin(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) - cos(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2]))) + 0.056114*cos(th[4] + 1.5708)*sin(th[5] + 1.5708)*(cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])));
 
-    
-
     virtual_spring << ee_force(0), ee_force(1), ee_force(2), ee_momentum(0), ee_momentum(1), ee_momentum(2);
-    joint_torque = Jacobian.transpose() * virtual_spring + gravity_compensation;
-    //joint_torque = Jacobian.transpose() * virtual_spring;
+    //joint_torque = Jacobian.transpose() * virtual_spring + gravity_compensation;
+    joint_torque = Jacobian.transpose() * virtual_spring;
+
+
+    float temp_x = ee_position(0);
+    float temp_y = ee_position(1);
+    float temp_z = ee_position(2);
+   
+    float ref_temp_x = ref_ee_position(0);
+    float ref_temp_y = ref_ee_position(1);
+    float ref_temp_z = ref_ee_position(2);
+
+
+
+    if (abs(temp_x - ref_temp_x) > pre_data_x) 
+    {
+      pre_data_x = abs(temp_x - ref_temp_x);
+      //std::cout << "x=" << pre_data_x << std::endl;
+    } 
+    if (abs(temp_y - ref_temp_y) > pre_data_y) 
+    {
+      pre_data_y = abs(temp_y - ref_temp_y);
+      //std::cout << "y=" << pre_data_y <<  std::endl;
+    } 
+    if (abs(temp_z - ref_temp_z) > pre_data_z) 
+    {
+      pre_data_z = abs(temp_z - ref_temp_z);
+      //std::cout << "z=" << pre_data_z <<  std::endl;
+    } 
+    else std::cout << "x=" << pre_data_x << "y=" << pre_data_y << "z=" << pre_data_z << std::endl;
     
     cnt++;
   }
@@ -301,7 +326,7 @@ namespace gazebo
   void JM_simple::Motion2()
   {
     gain_p << 500, 500, 500;
-    gain_d << 1, 10, 10;
+    //gain_d << 1, 10, 10;
     gain_w << 10, 10, 10;
 
     cnt_time = cnt*inner_dt;   
@@ -367,12 +392,12 @@ namespace gazebo
     Jacobian << J1, J2, J3, J4, J5, J6;
 
     ee_position << T06(0,3), T06(1,3), T06(2,3);
-    ee_velocity = (ee_position - pre_ee_position) / inner_dt;
+    //ee_velocity = (ee_position - pre_ee_position) / inner_dt;
     pre_ee_position = ee_position;
 
-    ee_force(0) = gain_p(0) * (om_ee_position(0) - ee_position(0)) - gain_d(0) * ee_velocity(0);
-    ee_force(1) = gain_p(1) * (om_ee_position(1) - ee_position(1)) - gain_d(1) * ee_velocity(1);
-    ee_force(2) = gain_p(2) * (om_ee_position(2) - ee_position(2)) - gain_d(2) * ee_velocity(2);
+    ee_force(0) = gain_p(0) * (om_ee_position(0) - ee_position(0)); // - gain_d(0) * ee_velocity(0);
+    ee_force(1) = gain_p(1) * (om_ee_position(1) - ee_position(1)); // - gain_d(1) * ee_velocity(1);
+    ee_force(2) = gain_p(2) * (om_ee_position(2) - ee_position(2)); // - gain_d(2) * ee_velocity(2);
 
     ee_rotation = T06.block<3,3>(0,0);
     ee_rotation_x = ee_rotation.block<3,1>(0,0); 

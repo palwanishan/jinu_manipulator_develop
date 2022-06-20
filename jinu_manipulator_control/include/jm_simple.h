@@ -80,6 +80,9 @@ float qx = 0;
 float qy = 0;
 float qz = 0;
 
+float pre_data_x = 0;
+float pre_data_y = 0;
+float pre_data_z = 0;
 
 namespace gazebo
 {
@@ -136,11 +139,8 @@ namespace gazebo
     VectorXd J1 = VectorXd::Zero(6); VectorXd J2 = VectorXd::Zero(6); VectorXd J3 = VectorXd::Zero(6);
     VectorXd J4 = VectorXd::Zero(6); VectorXd J5 = VectorXd::Zero(6); VectorXd J6 = VectorXd::Zero(6); 
     VectorXd joint_torque = VectorXd::Zero(6);
-<<<<<<< HEAD
     VectorXd gravity_compensation = VectorXd::Zero(6);
-=======
     VectorXd gripper_torque = VectorXd::Zero(2);
->>>>>>> ce1312345c0965e9a71caf0cf9948c5d0302070c
     VectorXd virtual_spring = VectorXd::Zero(6);
 
     // Temporary variables
