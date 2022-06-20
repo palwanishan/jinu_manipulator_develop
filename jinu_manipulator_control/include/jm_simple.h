@@ -131,6 +131,7 @@ namespace gazebo
     VectorXd J1 = VectorXd::Zero(6); VectorXd J2 = VectorXd::Zero(6); VectorXd J3 = VectorXd::Zero(6);
     VectorXd J4 = VectorXd::Zero(6); VectorXd J5 = VectorXd::Zero(6); VectorXd J6 = VectorXd::Zero(6); 
     VectorXd joint_torque = VectorXd::Zero(6);
+    VectorXd gravity_compensation = VectorXd::Zero(6);
     VectorXd virtual_spring = VectorXd::Zero(6);
 
     // Temporary variables
