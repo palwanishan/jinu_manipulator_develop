@@ -22,6 +22,7 @@
 #include <std_msgs/Int32.h>
 #include <tf2_msgs/TFMessage.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/PoseStamped.h>
 
 using gazebo::physics::ModelPtr;
 using gazebo::physics::LinkPtr;
@@ -88,6 +89,9 @@ namespace gazebo
     LinkPtr Base, Link1, Link2, Link3, Link4, Link5, Link6;
     JointPtr Joint1, Joint2, Joint3, Joint4, Joint5, Joint6;
 
+    LinkPtr gripper_link, gripper_link_sub;
+    JointPtr gripper, gripper_sub;
+
     const std::vector<std::string> joint_names = {"joint1", "joint2", "joint3", "joint4", "joint5", "joint6"};
 
     common::Time last_update_time;
@@ -97,7 +101,7 @@ namespace gazebo
     double time = 0;
     double trajectory;
 
-    Vector3d ee_position, ee_velocity, pre_ee_position, ref_ee_position, initial_ee_position;
+    Vector3d ee_position, ee_velocity, pre_ee_position, ref_ee_position, initial_ee_position, hmd_position;
     Vector3d gain_p, gain_d, gain_w;
     VectorXd gain_p_joint_space = VectorXd(6);
     VectorXd gain_d_joint_space = VectorXd(6);
@@ -110,6 +114,7 @@ namespace gazebo
 
     Quaterniond ref_ee_quaternion;  
     Quaterniond ee_quaternion;  
+    Quaterniond hmd_quaternion;
 
     VectorXd th = VectorXd::Zero(6);
     VectorXd ref_th = VectorXd::Zero(6);
@@ -131,7 +136,11 @@ namespace gazebo
     VectorXd J1 = VectorXd::Zero(6); VectorXd J2 = VectorXd::Zero(6); VectorXd J3 = VectorXd::Zero(6);
     VectorXd J4 = VectorXd::Zero(6); VectorXd J5 = VectorXd::Zero(6); VectorXd J6 = VectorXd::Zero(6); 
     VectorXd joint_torque = VectorXd::Zero(6);
+<<<<<<< HEAD
     VectorXd gravity_compensation = VectorXd::Zero(6);
+=======
+    VectorXd gripper_torque = VectorXd::Zero(2);
+>>>>>>> ce1312345c0965e9a71caf0cf9948c5d0302070c
     VectorXd virtual_spring = VectorXd::Zero(6);
 
     // Temporary variables
@@ -149,6 +158,7 @@ namespace gazebo
     ros::Subscriber sub_open_manipulator_joint_state;
     ros::Publisher pub_ee_pose;
     ros::Publisher pub_ref_ee_pose;
+    ros::Subscriber sub_hmd_tf; 
 
     std::vector<double> present_joint_angle_;
 
@@ -158,7 +168,8 @@ namespace gazebo
     {
       IDLE = 0,
       Motion_1,
-      Motion_2
+      Motion_2,
+      Motion_3
     };
     enum ControlMode control_mode;
 
@@ -176,8 +187,11 @@ namespace gazebo
     void Idle();
     void Motion1();
     void Motion2();
+    void Motion3();
     void SwitchMode(const std_msgs::Int32Ptr & msg);
     void OMJointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg);
+    void GripperControl();
+    void HMDTFCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
   };
   GZ_REGISTER_MODEL_PLUGIN(JM_simple);
 }
