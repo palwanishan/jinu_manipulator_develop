@@ -57,11 +57,11 @@
       <child>link2</child>
       <axis>
         <xyz>0 0 1</xyz>
+<!--
           <dynamics>
 	           <friction>0.5</friction>
 	           <damping>0.5</damping>
 	        </dynamics>
-<!--
         <limit>
           <lower>-3.14159</lower>
           <upper>3.14159</upper>
@@ -114,11 +114,11 @@
       <child>link3</child>
       <axis>
         <xyz>0 1 0</xyz>
+<!--
           <dynamics>
 	           <friction>0.2</friction>
 	           <damping>0.2</damping>
 	        </dynamics>
-<!--
         <limit>
           <lower>-3.141592</lower>
           <upper>0</upper>
@@ -171,11 +171,11 @@
       <child>link4</child>
       <axis>
         <xyz>0 1 0</xyz>
+<!--
           <dynamics>
 	           <friction>0.25</friction>
 	           <damping>0.25</damping>
 	        </dynamics>
-<!--
         <limit>
           <lower>-0.3005</lower>
           <upper>2.84109</upper>
@@ -228,11 +228,11 @@
       <child>link5</child>
       <axis>
         <xyz>0 1 0</xyz>
+<!--
           <dynamics>
 	           <friction>0.2</friction>
 	           <damping>0.2</damping>
 	        </dynamics>
-<!--
         <limit>
           <lower>-1.79071</lower>
           <upper>1.79071</upper>
@@ -285,11 +285,11 @@
       <child>link6</child>
       <axis>
         <xyz>1 0 0</xyz>
+<!--
           <dynamics>
 	           <friction>0.2</friction>
 	           <damping>0.2</damping>
 	        </dynamics>
-<!--
         <limit>
           <lower>-3.14159</lower>
           <upper>3.14159</upper>
@@ -342,11 +342,11 @@
       <child>link7</child>
       <axis>
         <xyz>0 0 1</xyz>
+<!--
           <dynamics>
 	           <friction>0.2</friction>
 	           <damping>0.2</damping>
 	        </dynamics>
-<!--
         <limit>
           <lower>-3.14159</lower>
           <upper>3.14159</upper>

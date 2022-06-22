@@ -84,6 +84,9 @@ float pre_data_x = 0;
 float pre_data_y = 0;
 float pre_data_z = 0;
 
+float input_P = 200;
+float input_D = 0;
+
 namespace gazebo
 {
   class JM_simple : public ModelPlugin
@@ -142,6 +145,7 @@ namespace gazebo
     VectorXd gravity_compensation = VectorXd::Zero(6);
     VectorXd gripper_torque = VectorXd::Zero(2);
     VectorXd virtual_spring = VectorXd::Zero(6);
+    VectorXd viscous_damping = VectorXd::Zero(6);
 
     // Temporary variables
     Quaterniond om_ee_quaternion;
@@ -155,6 +159,7 @@ namespace gazebo
     ros::NodeHandle node_handle;
     ros::Publisher pub_joint_state;
     ros::Subscriber sub_mode_selector;
+    ros::Subscriber gain;
     ros::Subscriber sub_open_manipulator_joint_state;
     ros::Publisher pub_ee_pose;
     ros::Publisher pub_ref_ee_pose;
@@ -189,6 +194,8 @@ namespace gazebo
     void Motion2();
     void Motion3();
     void SwitchMode(const std_msgs::Int32Ptr & msg);
+    void SwitchGain(const std_msgs::Int32Ptr & msg);
+    
     void OMJointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg);
     void GripperControl();
     void HMDTFCallback(const geometry_msgs::PoseStamped::ConstPtr &msg);
