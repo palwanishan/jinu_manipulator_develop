@@ -43,6 +43,8 @@ namespace gazebo
   {
     pub_joint_state = node_handle.advertise<sensor_msgs::JointState>("jinu_manipulator/joint_states", 100);
     sub_mode_selector = node_handle.subscribe("jinu_manipulator/mode_selector", 1, &gazebo::JM_simple::SwitchMode, this); 
+    gain = node_handle.subscribe("jinu_manipulator/gain", 1, &gazebo::JM_simple::SwitchGain, this); 
+    
     sub_open_manipulator_joint_state = node_handle.subscribe("joint_states", 1, &gazebo::JM_simple::OMJointStatesCallback, this); 
     sub_hmd_tf = node_handle.subscribe("unity/hmd_tf", 1, &gazebo::JM_simple::HMDTFCallback, this);
 
@@ -150,6 +152,17 @@ namespace gazebo
   }
 
 
+  void JM_simple::SwitchGain(const std_msgs::Int32Ptr & msg)
+  {
+    cnt = 0;
+    if (msg -> data > 0) input_P = msg -> data;  
+    if (msg -> data < 0) input_D = - msg -> data;  
+    pre_data_x = 0;
+    pre_data_y = 0;
+    pre_data_z = 0;
+  }
+
+
   void JM_simple::Idle()
   {
     gain_p_joint_space << 100, 100, 100, 30, 30, 30;
@@ -181,8 +194,10 @@ namespace gazebo
 
   //  Infinity Drawer
   void JM_simple::Motion1()
-  {      
-    gain_p << 100, 100, 100;
+  { 
+    gain_p << input_P, input_P, input_P;     
+    gain_d_joint_space << 3, 5, 3, 0.2, 0.1, 0.1;
+    //std::cout<< input_D<<std::endl;
     gain_w << 10, 10, 10;
 
     step_time = 6;
@@ -251,10 +266,6 @@ namespace gazebo
 
     ee_position << T06(0,3), T06(1,3), T06(2,3);
     
-    if (cnt<1) pre_ee_position = ee_position; 
-    ee_velocity = (ee_position - pre_ee_position) / inner_dt;
-    pre_ee_position = ee_position;
-    
     if (cnt<1) initial_ee_position << ee_position(0), ee_position(1), ee_position(2);    
 
     if(cnt_time <= step_time*100)
@@ -265,14 +276,15 @@ namespace gazebo
       ref_ee_quaternion.w() = qw; ref_ee_quaternion.x() = qx; ref_ee_quaternion.y() = qy; ref_ee_quaternion.z() = qz;      
     }
 
-    ee_force(0) = gain_p(0) * (ref_ee_position(0) - ee_position(0))- gain_d(0) * ee_velocity(0);
-    ee_force(1) = gain_p(1) * (ref_ee_position(1) - ee_position(1))- gain_d(1) * ee_velocity(1);
-    ee_force(2) = gain_p(2) * (ref_ee_position(2) - ee_position(2))- gain_d(2) * ee_velocity(2);
+    ee_force(0) = gain_p(0) * (ref_ee_position(0) - ee_position(0));
+    ee_force(1) = gain_p(1) * (ref_ee_position(1) - ee_position(1));
+    ee_force(2) = gain_p(2) * (ref_ee_position(2) - ee_position(2));
 
     ee_rotation = T06.block<3,3>(0,0);
     ee_rotation_x = ee_rotation.block<3,1>(0,0); 
     ee_rotation_y = ee_rotation.block<3,1>(0,1); 
     ee_rotation_z = ee_rotation.block<3,1>(0,2);
+
     ref_ee_rotation = ref_ee_quaternion.normalized().toRotationMatrix();    
 
     ref_ee_rotation_x = ref_ee_rotation.block<3,1>(0,0); 
@@ -281,43 +293,32 @@ namespace gazebo
     ee_orientation_error = ee_rotation_x.cross(ref_ee_rotation_x) + ee_rotation_y.cross(ref_ee_rotation_y) + ee_rotation_z.cross(ref_ee_rotation_z);
     ee_momentum << gain_w(0) * ee_orientation_error(0), gain_w(1) * ee_orientation_error(1), gain_w(2) * ee_orientation_error(2);
 
+    virtual_spring << ee_force(0), ee_force(1), ee_force(2), ee_momentum(0), ee_momentum(1), ee_momentum(2);
+  
     gravity_compensation[1] = 1.5698*sin(th[1])*sin(th[2]) - 1.5698*cos(th[1])*cos(th[2]) - 2.9226*cos(th[1]) + 0.21769*cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + 0.21769*sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])) + 0.056114*sin(th[5] + 1.5708)*(cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2]))) + 0.056114*cos(th[4] + 1.5708)*cos(th[5] + 1.5708)*(1.0*sin(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) - cos(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])));
     gravity_compensation[2] = 1.5698*sin(th[1])*sin(th[2]) - 1.5698*cos(th[1])*cos(th[2]) + 0.21769*cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + 0.21769*sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])) + 0.056114*sin(th[5] + 1.5708)*(cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2]))) + 0.056114*cos(th[4] + 1.5708)*cos(th[5] + 1.5708)*(1.0*sin(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) - cos(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])));
     gravity_compensation[3] = 0.21769*cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + 0.21769*sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])) + 0.056114*sin(th[5] + 1.5708)*(cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2]))) + 0.056114*cos(th[4] + 1.5708)*cos(th[5] + 1.5708)*(1.0*sin(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) - cos(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])));
     gravity_compensation[4] = 0.056114*cos(th[5] + 1.5708)*sin(th[4] + 1.5708)*(cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])));
     gravity_compensation[5] = 0.056114*cos(th[5] + 1.5708)*(1.0*sin(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) - cos(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2]))) + 0.056114*cos(th[4] + 1.5708)*sin(th[5] + 1.5708)*(cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])));
 
-    virtual_spring << ee_force(0), ee_force(1), ee_force(2), ee_momentum(0), ee_momentum(1), ee_momentum(2);
-    //joint_torque = Jacobian.transpose() * virtual_spring + gravity_compensation;
-    joint_torque = Jacobian.transpose() * virtual_spring;
+    if (cnt<1) last_th = th;
+    th_dot = (th - last_th) / dt;
+    last_th = th;
+    for (int i = 0; i < 6; i++) viscous_damping[i] = gain_d_joint_space[i] * th_dot[i];
+    
+    joint_torque =  Jacobian.transpose() * virtual_spring + gravity_compensation - viscous_damping;
 
+    // float temp_x = ee_position(0);
+    // float temp_y = ee_position(1);
+    // float temp_z = ee_position(2);   
+    // float ref_temp_x = ref_ee_position(0);
+    // float ref_temp_y = ref_ee_position(1);
+    // float ref_temp_z = ref_ee_position(2);
 
-    float temp_x = ee_position(0);
-    float temp_y = ee_position(1);
-    float temp_z = ee_position(2);
-   
-    float ref_temp_x = ref_ee_position(0);
-    float ref_temp_y = ref_ee_position(1);
-    float ref_temp_z = ref_ee_position(2);
-
-
-
-    if (abs(temp_x - ref_temp_x) > pre_data_x) 
-    {
-      pre_data_x = abs(temp_x - ref_temp_x);
-      //std::cout << "x=" << pre_data_x << std::endl;
-    } 
-    if (abs(temp_y - ref_temp_y) > pre_data_y) 
-    {
-      pre_data_y = abs(temp_y - ref_temp_y);
-      //std::cout << "y=" << pre_data_y <<  std::endl;
-    } 
-    if (abs(temp_z - ref_temp_z) > pre_data_z) 
-    {
-      pre_data_z = abs(temp_z - ref_temp_z);
-      //std::cout << "z=" << pre_data_z <<  std::endl;
-    } 
-    else std::cout << "x=" << pre_data_x << "y=" << pre_data_y << "z=" << pre_data_z << std::endl;
+    // if (abs(temp_x - ref_temp_x) > pre_data_x) pre_data_x = abs(temp_x - ref_temp_x);
+    // if (abs(temp_y - ref_temp_y) > pre_data_y) pre_data_y = abs(temp_y - ref_temp_y);  
+    // if (abs(temp_z - ref_temp_z) > pre_data_z) pre_data_z = abs(temp_z - ref_temp_z);
+    // else std::cout << "x=" << pre_data_x << "y=" << pre_data_y << "z=" << pre_data_z << std::endl;
     
     cnt++;
   }
@@ -424,8 +425,8 @@ namespace gazebo
   //HMD Orientation follower
   void JM_simple::Motion3()
   {
-    gain_p << 500, 500, 500;
-    gain_d << 1, 10, 10;
+    gain_p << 400, 400, 400;
+    gain_d << 5, 5, 5;
     gain_w << 10, 10, 10;
 
     cnt++;
@@ -521,9 +522,15 @@ namespace gazebo
                   gain_w(1) * ee_orientation_error(1), 
                   gain_w(2) * ee_orientation_error(2);
 
-    virtual_spring << ee_force(0), ee_force(1), ee_force(2), ee_momentum(0), ee_momentum(1), ee_momentum(2);
 
-    joint_torque = Jacobian.transpose() * virtual_spring;
+    gravity_compensation[1] = 1.5698*sin(th[1])*sin(th[2]) - 1.5698*cos(th[1])*cos(th[2]) - 2.9226*cos(th[1]) + 0.21769*cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + 0.21769*sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])) + 0.056114*sin(th[5] + 1.5708)*(cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2]))) + 0.056114*cos(th[4] + 1.5708)*cos(th[5] + 1.5708)*(1.0*sin(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) - cos(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])));
+    gravity_compensation[2] = 1.5698*sin(th[1])*sin(th[2]) - 1.5698*cos(th[1])*cos(th[2]) + 0.21769*cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + 0.21769*sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])) + 0.056114*sin(th[5] + 1.5708)*(cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2]))) + 0.056114*cos(th[4] + 1.5708)*cos(th[5] + 1.5708)*(1.0*sin(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) - cos(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])));
+    gravity_compensation[3] = 0.21769*cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + 0.21769*sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])) + 0.056114*sin(th[5] + 1.5708)*(cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2]))) + 0.056114*cos(th[4] + 1.5708)*cos(th[5] + 1.5708)*(1.0*sin(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) - cos(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])));
+    gravity_compensation[4] = 0.056114*cos(th[5] + 1.5708)*sin(th[4] + 1.5708)*(cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])));
+    gravity_compensation[5] = 0.056114*cos(th[5] + 1.5708)*(1.0*sin(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) - cos(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2]))) + 0.056114*cos(th[4] + 1.5708)*sin(th[5] + 1.5708)*(cos(th[3] - 1.5708)*(cos(th[1])*sin(th[2]) + cos(th[2])*sin(th[1])) + sin(th[3] - 1.5708)*(cos(th[1])*cos(th[2]) - 1.0*sin(th[1])*sin(th[2])));
+
+    virtual_spring << ee_force(0), ee_force(1), ee_force(2), ee_momentum(0), ee_momentum(1), ee_momentum(2);
+    joint_torque = Jacobian.transpose() * virtual_spring; // + gravity_compensation;
   }
 
 
