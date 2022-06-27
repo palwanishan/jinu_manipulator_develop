@@ -6,6 +6,7 @@
 #include "Common.h"
 #include "rmd_log.h"
 #include "rmd_can.h"
+#include "rmd_utils.h"
 
 #define CMD_DQ_SAVE                 0x06
 
@@ -91,6 +92,7 @@ public:
 
     unsigned char ref_data[8];
     unsigned char enc_data[8];
+    unsigned char torque_data[8];
 
     int     BOARD_ID;
     int     CAN_CHANNEL;
@@ -129,14 +131,22 @@ public:
     float   RefPosOut;
     float   RefCurOut;
 
+    // Converting reference
+    float   torqueToHex;
+
     // Sensor information
     int     EncoderValue;
+    int     TorqueCommandEncoderValue;
 
     float   MeasuredPosition_deg;
     float   MeasuredVelocity_deg;
     float   MeasuredCurrent_A;
 
     char    BoardTemperature;
+
+    int     _torque_ctrl_torque_fdback;
+    int     _torque_ctrl_speed_fdback;
+    int     _torque_ctrl_encoder_fdback;
 
     // -----------------------
 
@@ -154,12 +164,15 @@ public:
     void    Joint_SetMoveJoint(float angle, float timeMs, int mode);
     void    Joint_SetMoveJointSTrapi(float angle, float speed, int mode);
     void    Joint_MoveJoint();
+    void    Set_Torque(float torque);
 
     void    Board_ReferenceOutEnable(bool _refEnable);
     void    Board_SendReference(void);
     void    Board_GetEncData(void);
     
     void    Board_GetEncData2(void);
+    void    Board_SetTorqueDataX(void);
+    void    Board_GetTorqueData2(void);
 
     void    Board_SetCANIDs(int bno, int can_ch);
     void    Board_CANCheck(void);

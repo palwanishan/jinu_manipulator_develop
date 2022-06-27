@@ -134,11 +134,12 @@ void *spi2can::spi2can_thread(void *arg){
                 if(id>=0x140 && id<=0x140+MAX_MC){
                     int bno = id-0x140;
                     count[bno]++;
-                    if(recv_data1[0] == 0x92){
+                    if(recv_data1[0] == 0xA1){
                         for(int j=0; j<dlc; j++){
-                            _DEV_MC[bno].enc_data[j] = recv_data1[j];                            
+                            _DEV_MC[bno].torque_data[j] = recv_data1[j];
                         }
-                        _DEV_MC[bno].Board_GetEncData();
+                        _DEV_MC[bno].Board_SetTorqueDataX();
+                        // std::cout << "Recieved message " << (int)_DEV_MC[5].torque_data[6] << std::endl;
                     }
                 }else{
                     ST_CAN temp_can;
@@ -173,6 +174,12 @@ void *spi2can::spi2can_thread(void *arg){
                             _DEV_MC[bno].enc_data[j] = recv_data2[j];                            
                         }
                         _DEV_MC[bno].Board_GetEncData2();
+                    }
+                    else if(recv_data2[0] == 0xA1){
+                        for(int j=0; j<dlc; j++){
+                            _DEV_MC[bno].torque_data[j] = recv_data2[j];
+                        }     
+                        _DEV_MC[bno].Board_SetTorqueDataX();
                     }
                 }else{
                     ST_CAN temp_can;

@@ -145,27 +145,36 @@ void rmd_motor::Board_GetEncData2(void) {
         int temp_enc = (int)(enc_data[1] | (enc_data[2]<<8) | (enc_data[3]<<16) | (enc_data[4]<<24));
         if(temp_enc & 0x80000) temp_enc |= 0xFFF00000;
         EncoderValue = temp_enc;
-        MeasuredPosition_deg = (float)EncoderValue/PPR + zeroManualOffset;        
     }
     else {
         int temp_enc = (int)(enc_data[1] | (enc_data[2]<<8) | ((enc_data[3]&0xF0)<<12));
         if(temp_enc & 0x80000) temp_enc |= 0xFFF00000;
         EncoderValue = temp_enc;
-        MeasuredPosition_deg = (float)EncoderValue/PPR + zeroManualOffset;
-    }
+    }    
+    MeasuredPosition_deg = (float)EncoderValue/PPR + zeroManualOffset;
+}
+
+void rmd_motor::Board_SetTorqueDataX(void) {
+    int temp_torque = (int)(torque_data[2] | (torque_data[3]<<8));
+    _torque_ctrl_torque_fdback = temp_torque;
+    int temp_speed = (int)(torque_data[4] | (torque_data[5]<<8));
+    _torque_ctrl_speed_fdback = temp_speed;
+    int temp_enc = (int)(torque_data[6] | (torque_data[7]<<8));
+    if(temp_enc & 0x80000) temp_enc |= 0xFFF00000;
+    _torque_ctrl_encoder_fdback = temp_enc;
+}
+
+
+void rmd_motor::Board_GetTorqueData2(void) {
+    int temp_enc = (int)(torque_data[6] | (torque_data[7]<<8));
+    if(temp_enc & 0x80000) temp_enc |= 0xFFF00000;
+    TorqueCommandEncoderValue = temp_enc;
 }
 
 // HRRLAB - CAN ID SETTING
 void rmd_motor::Board_SetCANIDs(int bno, int can_ch){
     BOARD_ID = bno;
     CAN_CHANNEL = can_ch;
-
-    ID_SEND_GENERAL = 0x10+bno;
-    ID_RCV_INFO = 0x20+bno;
-    ID_RCV_STAT = 0x30+bno;
-    ID_SEND_REF = 0x40+bno;
-    ID_RCV_ENC = 0x50+bno;
-
     ID_RMD_COMMAND = 0x140+bno;
 }
 

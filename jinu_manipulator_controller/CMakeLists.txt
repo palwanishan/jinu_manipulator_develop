@@ -72,7 +72,9 @@ add_executable(
   src/rmd_utils.cpp 
   src/rmd_can.cpp
   src/spi2can.cpp
-  src/rmd_motor.cpp)
+  src/rmd_motor.cpp
+  src/motor_controller.cpp
+  src/dynamics.cpp)
 add_dependencies(jinu_manipulator_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(jinu_manipulator_controller ${catkin_LIBRARIES} ${Boost_LIBRARIES} Qt5::Core)
 

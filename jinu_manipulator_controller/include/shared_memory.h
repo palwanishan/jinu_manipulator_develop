@@ -15,8 +15,6 @@ using namespace std;
 
 #define EXTERNAL
 
-#define RT_MS       2
-
 #define MAX_COMMAND_DATA        30
 
 #define R2D         57.2957802

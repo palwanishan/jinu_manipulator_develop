@@ -20,6 +20,6 @@ using namespace std;
 #define MAX_JOINT   12
 #define MAX_LEG      4
 
-#define RT_MS       2
+//#define RT_MS       1
 
 #endif // COMMON_H
