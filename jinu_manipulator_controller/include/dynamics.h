@@ -119,12 +119,20 @@ namespace Dynamics
     public:
         JMDynamics();
         //~JMDynamics();
+        VectorXd th_joint = VectorXd::Zero(6);
+        VectorXd last_th_joint = VectorXd::Zero(6);
+        VectorXd th_dot_joint = VectorXd::Zero(6);
+        VectorXd th_motor = VectorXd::Zero(6);
+        VectorXd th_incremental = VectorXd::Zero(6);
         VectorXd zero_th = VectorXd::Zero(6);
         VectorXd th = VectorXd::Zero(6);
         VectorXd ref_th = VectorXd::Zero(6);
         VectorXd last_th = VectorXd::Zero(6);
         VectorXd th_dot = VectorXd::Zero(6);
         VectorXd last_th_dot = VectorXd::Zero(6);
+
+        float trajectory = 0;
+
 
         VectorXd om_th = VectorXd::Zero(6);
         VectorXd joint_torque = VectorXd::Zero(6);
@@ -139,6 +147,7 @@ namespace Dynamics
         void SetOMTheta(VectorXd thetas);
         void GenerateTorque_JointSpacePD(double deltaT);
         void GenerateTorque_TaskSpacePD();
+        void GenerateTrajectory();
 
     };
 }

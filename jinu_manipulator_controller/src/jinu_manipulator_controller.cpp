@@ -36,16 +36,16 @@ void joint_states_callback(const sensor_msgs::JointState::ConstPtr &msg){
 
 void SwitchGainP(const std_msgs::Float32ConstPtr &msg)
 {
-    jm_dynamics.gain_p_joint_space[3] = msg -> data;
-    jm_dynamics.gain_p_joint_space[4] = msg -> data;
-    jm_dynamics.gain_p_joint_space[5] = msg -> data;
+    jm_dynamics.gain_p_joint_space[0] = msg -> data;
+    jm_dynamics.gain_p_joint_space[1] = msg -> data;
+    jm_dynamics.gain_p_joint_space[2] = msg -> data;
 }
 
 void SwitchGainD(const std_msgs::Float32ConstPtr &msg)
 {
-    jm_dynamics.gain_d_joint_space[3] = msg -> data;
-    jm_dynamics.gain_d_joint_space[4] = msg -> data;
-    jm_dynamics.gain_d_joint_space[5] = msg -> data;
+    jm_dynamics.gain_d_joint_space[0] = msg -> data;
+    jm_dynamics.gain_d_joint_space[1] = msg -> data;
+    jm_dynamics.gain_d_joint_space[2] = msg -> data;
 }
 
 int main(int argc, char *argv[])
@@ -82,8 +82,10 @@ int main(int argc, char *argv[])
         for (uint8_t i = 0; i<6; i ++)
         {
             msg.name.push_back(joints_name.at(i));
-            msg.position.push_back(jm_dynamics.th[i]);
-            msg.velocity.push_back(jm_dynamics.th_dot[i]);
+            //msg.position.push_back(jm_dynamics.th[i]);      //th_joint
+            msg.position.push_back(jm_dynamics.th_joint[i]); 
+            //msg.velocity.push_back(jm_dynamics.th_dot[i]);
+            msg.velocity.push_back(jm_dynamics.th_dot_joint[i]);
             // msg.velocity.push_back(_DEV_MC[i+3].MeasuredPosition_deg);
             msg.effort.push_back(jm_dynamics.joint_torque[i]);  //_torque_ctrl_encoder_fdback
         }
