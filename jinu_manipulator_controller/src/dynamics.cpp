@@ -130,7 +130,12 @@ namespace Dynamics
 
 
     void JMDynamics::GenerateTrajectory(){
-        
+        float count_time = count * dt;     
+        count++;   
+
+        trajectory = 1 * (1 - cos(PI * (count_time/step_time)));
+
+        // trajectory = 0.1 * sin(PI * (count_time/step_time));
     }
 
 
@@ -159,6 +164,8 @@ namespace Dynamics
         // last_th = th;
 
         ref_th << 0, 0, 0, 0, 0, 0;
+
+        ref_th[0] = trajectory;
 
         for (int i = 0; i < 6; i++) 
         {

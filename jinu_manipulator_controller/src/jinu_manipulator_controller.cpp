@@ -37,15 +37,15 @@ void joint_states_callback(const sensor_msgs::JointState::ConstPtr &msg){
 void SwitchGainP(const std_msgs::Float32ConstPtr &msg)
 {
     jm_dynamics.gain_p_joint_space[0] = msg -> data;
-    jm_dynamics.gain_p_joint_space[1] = msg -> data;
-    jm_dynamics.gain_p_joint_space[2] = msg -> data;
+    // jm_dynamics.gain_p_joint_space[1] = msg -> data;
+    // jm_dynamics.gain_p_joint_space[2] = msg -> data;
 }
 
 void SwitchGainD(const std_msgs::Float32ConstPtr &msg)
 {
     jm_dynamics.gain_d_joint_space[0] = msg -> data;
-    jm_dynamics.gain_d_joint_space[1] = msg -> data;
-    jm_dynamics.gain_d_joint_space[2] = msg -> data;
+    // jm_dynamics.gain_d_joint_space[1] = msg -> data;
+    // jm_dynamics.gain_d_joint_space[2] = msg -> data;
 }
 
 int main(int argc, char *argv[])
@@ -85,7 +85,8 @@ int main(int argc, char *argv[])
             //msg.position.push_back(jm_dynamics.th[i]);      //th_joint
             msg.position.push_back(jm_dynamics.th_joint[i]); 
             //msg.velocity.push_back(jm_dynamics.th_dot[i]);
-            msg.velocity.push_back(jm_dynamics.th_dot_joint[i]);
+            msg.velocity.push_back(jm_dynamics.ref_th[i]);
+                        // msg.velocity.push_back(jm_dynamics.th_dot_joint[i]);
             // msg.velocity.push_back(_DEV_MC[i+3].MeasuredPosition_deg);
             msg.effort.push_back(jm_dynamics.joint_torque[i]);  //_torque_ctrl_encoder_fdback
         }
@@ -118,6 +119,7 @@ void *rt_motion_thread(void *arg){
         if(!is_first_loop && loop_count > 1000){
             //std::cout << "looping" << std::endl;
             // motor_ctrl.ReadTheta();
+            jm_dynamics.GenerateTrajectory();
             jm_dynamics.SetTheta(motor_ctrl.GetTheta());
             jm_dynamics.GenerateTorque_JointSpacePD(1);
             motor_ctrl.SetTorque(jm_dynamics.GetTorque());

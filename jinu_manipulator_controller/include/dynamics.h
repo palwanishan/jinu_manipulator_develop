@@ -64,7 +64,7 @@ namespace Dynamics
 
         double dt = 0.002;
         double time = 0;
-        double trajectory;
+        double trajectory = 0;
 
         double cnt_time = 0;
         unsigned int cnt = 0;   
@@ -131,7 +131,8 @@ namespace Dynamics
         VectorXd th_dot = VectorXd::Zero(6);
         VectorXd last_th_dot = VectorXd::Zero(6);
 
-        float trajectory = 0;
+        int count = 0;
+        int step_time = 5;
 
 
         VectorXd om_th = VectorXd::Zero(6);
