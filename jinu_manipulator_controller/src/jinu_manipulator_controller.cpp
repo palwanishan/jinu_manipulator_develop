@@ -19,9 +19,11 @@ Dynamics::JMDynamics jm_dynamics;
 Motor_Controller motor_ctrl;
 bool first_loop{true};
 VectorXd om_th(6);
+// FILE *Joint_Space_PD_data1;
 
 void joint_states_callback(const sensor_msgs::JointState::ConstPtr &msg){
     
+    VectorXd om_th(6);
     for(int i = 0; i < msg->name.size(); i++)
     {
              if(!msg->name.at(i).compare("joint1")) om_th[0] = (msg->position.at(i));
@@ -39,6 +41,11 @@ void SwitchGainP(const std_msgs::Float32ConstPtr &msg)
     jm_dynamics.gain_p_joint_space[0] = msg -> data;
     // jm_dynamics.gain_p_joint_space[1] = msg -> data;
     // jm_dynamics.gain_p_joint_space[2] = msg -> data;
+    jm_dynamics.gain_p_joint_space[1] = 0.0;
+    jm_dynamics.gain_p_joint_space[2] = 0.0;
+    jm_dynamics.gain_p_joint_space[3] = 1.8;
+    jm_dynamics.gain_p_joint_space[4] = 0.5;
+    jm_dynamics.gain_p_joint_space[5] = 0.3;
 }
 
 void SwitchGainD(const std_msgs::Float32ConstPtr &msg)
@@ -46,6 +53,11 @@ void SwitchGainD(const std_msgs::Float32ConstPtr &msg)
     jm_dynamics.gain_d_joint_space[0] = msg -> data;
     // jm_dynamics.gain_d_joint_space[1] = msg -> data;
     // jm_dynamics.gain_d_joint_space[2] = msg -> data;
+    jm_dynamics.gain_d_joint_space[1] = 0.0;
+    jm_dynamics.gain_d_joint_space[2] = 0.0;
+    jm_dynamics.gain_d_joint_space[3] = 0.2;
+    jm_dynamics.gain_d_joint_space[4] = 0.03;
+    jm_dynamics.gain_d_joint_space[5] = 0.01;
 }
 
 int main(int argc, char *argv[])
@@ -63,6 +75,8 @@ int main(int argc, char *argv[])
     gain_p_sub_ = node_handle_.subscribe("st_arm/gain_p", 10, SwitchGainP);
     ros::Subscriber gain_d_sub_;
     gain_d_sub_ = node_handle_.subscribe("st_arm/gain_d", 10, SwitchGainD);
+
+    // Joint_Space_PD_data1 = fopen("/home/rainbow/catkin_ws/src/data1.dat","w");
 
     spi2can::getInstance();
 
@@ -82,13 +96,12 @@ int main(int argc, char *argv[])
         for (uint8_t i = 0; i<6; i ++)
         {
             msg.name.push_back(joints_name.at(i));
-            //msg.position.push_back(jm_dynamics.th[i]);      //th_joint
+            // msg.position.push_back(jm_dynamics.th[i]);
             msg.position.push_back(jm_dynamics.th_joint[i]); 
-            //msg.velocity.push_back(jm_dynamics.th_dot[i]);
             msg.velocity.push_back(jm_dynamics.ref_th[i]);
-                        // msg.velocity.push_back(jm_dynamics.th_dot_joint[i]);
-            // msg.velocity.push_back(_DEV_MC[i+3].MeasuredPosition_deg);
-            msg.effort.push_back(jm_dynamics.joint_torque[i]);  //_torque_ctrl_encoder_fdback
+            // msg.velocity.push_back(jm_dynamics.om_th[i]);
+            // msg.velocity.push_back(jm_dynamics.th_dot_joint[i]);
+            msg.effort.push_back(jm_dynamics.joint_torque[i]);
         }
         jinu_manipulator_joint_states_pub_.publish(msg);
         
@@ -114,15 +127,16 @@ void *rt_motion_thread(void *arg){
     while(true){
         clock_gettime(CLOCK_REALTIME, &TIME_TIC);
 
-        if(loop_count < 1001) loop_count++;
+        if(loop_count < 1000002) loop_count++;
 
         if(!is_first_loop && loop_count > 1000){
-            //std::cout << "looping" << std::endl;
-            // motor_ctrl.ReadTheta();
             jm_dynamics.GenerateTrajectory();
             jm_dynamics.SetTheta(motor_ctrl.GetTheta());
             jm_dynamics.GenerateTorque_JointSpacePD(1);
             motor_ctrl.SetTorque(jm_dynamics.GetTorque());
+
+            // fprintf(Joint_Space_PD_data1, "%lf %lf %lf \n", jm_dynamics.th_joint[0], jm_dynamics.ref_th[0], jm_dynamics.joint_torque[0]);         
+            // if(loop_count > 1000000) fclose(Joint_Space_PD_data1);
         }
 
         clock_gettime(CLOCK_REALTIME, &TIME_NOW);
@@ -132,7 +146,6 @@ void *rt_motion_thread(void *arg){
             motor_ctrl.EnableMotor();
             timespec_add_us(&TIME_NEXT, 5 * 1000 * 1000);
             is_first_loop = false;
-            //std::cout << "Motors are enabled!" << std::endl;
         }
         
 

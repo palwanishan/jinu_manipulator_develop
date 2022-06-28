@@ -132,39 +132,27 @@ namespace Dynamics
     void JMDynamics::GenerateTrajectory(){
         float count_time = count * dt;     
         count++;   
-
-        trajectory = 1 * (1 - cos(PI * (count_time/step_time)));
-
-        // trajectory = 0.1 * sin(PI * (count_time/step_time));
+        trajectory = PI * 1/2 * (1 - cos(PI * (count_time/step_time)));
     }
 
 
     void JMDynamics::GenerateTorque_JointSpacePD(double deltaT)
     {
+        joint_gear_reduction << 6, 8, 6, 1, 1, 1;
         th_incremental = th - last_th;
         last_th = th;
         for (int i = 0; i < 6; i++) {
             if (th_incremental[i] > 4) th_incremental[i] -= 6.28319;
             else if (th_incremental[i] < -4) th_incremental[i] += 6.28319;
-
-            if (i == 0) th_joint[i] += th_incremental[i] / 6;
-            else if (i == 1) th_joint[i] += th_incremental[i] / 8;
-            else if (i == 2) th_joint[i] += th_incremental[i] / 6;
-            else th_joint[i] += th_incremental[i];
-        }
+            th_joint[i] += th_incremental[i] / joint_gear_reduction[i];
+        }        
         th_dot_joint = (th_joint - last_th_joint) / 0.002;
         last_th_joint = th_joint;
 
-        // gain_p_joint_space << 0,    0,      0,      0,    0,    0.3;
-        // gain_d_joint_space << 0,    0,      0,      0,    0,    0.01;
-        gain_p_joint_space[5] = 0.3;
-        gain_d_joint_space[5] = 0.01;
-
-        // th_dot = (th - last_th) / 0.002;
-        // last_th = th;
+        // gain_p_joint_space << 0,    0,      0,      1.8,    0.5,    0.3;
+        // gain_d_joint_space << 0,    0,      0,      0.2,    0.03,    0.01;
 
         ref_th << 0, 0, 0, 0, 0, 0;
-
         ref_th[0] = trajectory;
 
         for (int i = 0; i < 6; i++) 
@@ -173,6 +161,7 @@ namespace Dynamics
             // joint_torque[i] = gain_p_joint_space[i] * (ref_th[i] - th[i]) - gain_d_joint_space[i] * th_dot[i];  
 
             joint_torque[i] = gain_p_joint_space[i] * (ref_th[i] - th_joint[i]) - gain_d_joint_space[i] * th_dot_joint[i]; 
+
             // joint_torque[i] = gain_p_joint_space[i] * (om_th[i] - th_joint[i]) - gain_d_joint_space[i] * th_dot_joint[i]; 
         }
     }

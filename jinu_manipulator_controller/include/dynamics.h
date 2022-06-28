@@ -132,7 +132,9 @@ namespace Dynamics
         VectorXd last_th_dot = VectorXd::Zero(6);
 
         int count = 0;
-        int step_time = 5;
+        int step_time = 1;
+
+        VectorXd joint_gear_reduction = VectorXd::Zero(6);
 
 
         VectorXd om_th = VectorXd::Zero(6);
