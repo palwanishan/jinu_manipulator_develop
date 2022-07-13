@@ -10,6 +10,10 @@
 class Motor_Controller{
 
 public:   
+
+  int count;
+  bool first_loop = true;
+
   float thetas[6];  
   VectorXd theta_rad = VectorXd::Zero(6);
   VectorXd theta_deg = VectorXd::Zero(6);
@@ -18,12 +22,24 @@ public:
   VectorXd theta_balanced_0xA1 = VectorXd::Zero(6);
   VectorXd theta_balanced_rad_0xA1 = VectorXd::Zero(6);
 
+
+  VectorXd th_joint = VectorXd::Zero(6);
+  VectorXd last_th_joint = VectorXd::Zero(6);
+  VectorXd th_dot_joint = VectorXd::Zero(6);
+  VectorXd th_motor = VectorXd::Zero(6);
+  VectorXd last_th_motor = VectorXd::Zero(6);
+  VectorXd th_incremental = VectorXd::Zero(6);
+  VectorXd th_dot = VectorXd::Zero(6);
+
+
   Motor_Controller();
   //~Motor_Controller();
 
   VectorXd GetThetaX();
   VectorXd GetThetaL();
   VectorXd GetTheta();
+  VectorXd GetJointTheta();
+  VectorXd GetThetaDot();
   void ReadTheta();    
   void SetTorque(VectorXd tau);  
   void SetPosition(VectorXd theta);  

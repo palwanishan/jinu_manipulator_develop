@@ -114,6 +114,16 @@ public:
     float   PPR;    // Encoder pulse per one rotation(axis)
     int     TPC;    // Torque per current
     int     gear_ratio;
+    int     direction;
+    float   tic2rad;
+    float   zero_offset;
+    float   th_dot_joint;
+    float   th_joint;
+    float   th_motor;
+    float   last_th_motor;
+    float   th_incremental;
+    bool    first_loop_updateTheta = true;
+    bool    second_loop_updateTheta = true;
 
     //--- Home joint set
     float   homeJointReady;
@@ -145,7 +155,7 @@ public:
     char    BoardTemperature;
 
     int     _torque_ctrl_torque_fdback;
-    int     _torque_ctrl_speed_fdback;
+    float     _torque_ctrl_speed_fdback;
     int     _torque_ctrl_encoder_fdback;
 
     // -----------------------
@@ -165,6 +175,7 @@ public:
     void    Joint_SetMoveJointSTrapi(float angle, float speed, int mode);
     void    Joint_MoveJoint();
     void    Set_Torque(float torque);
+    
 
     void    Board_ReferenceOutEnable(bool _refEnable);
     void    Board_SendReference(void);
@@ -173,6 +184,9 @@ public:
     void    Board_GetEncData2(void);
     void    Board_SetTorqueDataX(void);
     void    Board_GetTorqueData2(void);
+    void    UpdateTheta(void);
+    float   GetTheta();
+    float   GetThetaDot();
 
     void    Board_SetCANIDs(int bno, int can_ch);
     void    Board_CANCheck(void);

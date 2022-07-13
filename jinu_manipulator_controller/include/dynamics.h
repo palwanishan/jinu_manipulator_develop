@@ -69,8 +69,6 @@ namespace Dynamics
         double cnt_time = 0;
         unsigned int cnt = 0;   
 
-        Vector3d ee_position, ee_velocity, pre_ee_position, ref_ee_position, initial_ee_position, hmd_position;
-        Vector3d gain_p, gain_d, gain_w;
 
         Vector3d ee_rotation_x, ee_rotation_y, ee_rotation_z, ref_ee_rotation_x, ref_ee_rotation_y, ref_ee_rotation_z;
         Vector3d ee_orientation_error, ee_force, ee_momentum;
@@ -80,8 +78,6 @@ namespace Dynamics
 
         Quaterniond ref_ee_quaternion;  
         Quaterniond ee_quaternion;  
-        Quaterniond hmd_quaternion;
-
         VectorXd initial_pose = VectorXd::Zero(6);
         
         MatrixXd A0 = MatrixXd::Zero(4,4);  MatrixXd A1 = MatrixXd::Zero(4,4); MatrixXd A2 = MatrixXd::Zero(4,4); 
@@ -130,27 +126,45 @@ namespace Dynamics
         VectorXd last_th = VectorXd::Zero(6);
         VectorXd th_dot = VectorXd::Zero(6);
         VectorXd last_th_dot = VectorXd::Zero(6);
+        VectorXd zero_vector_6 = VectorXd::Zero(6);
 
         int count = 0;
-        int step_time = 1;
+        int step_time = 5;
 
         VectorXd joint_gear_reduction = VectorXd::Zero(6);
 
 
+        Quaterniond hmd_quaternion;
+
+        Vector3d ee_position, ee_velocity, pre_ee_position, ref_ee_position, initial_ee_position, hmd_position;
+        Vector3d gain_p, gain_d, gain_w;
+
+
+
         VectorXd om_th = VectorXd::Zero(6);
         VectorXd joint_torque = VectorXd::Zero(6);
+        VectorXd viscosity = VectorXd::Zero(6);
 
-        VectorXd gain_p_joint_space = VectorXd(6);
-        VectorXd gain_d_joint_space = VectorXd(6);
+        VectorXd gain_p_joint_space = VectorXd::Zero(6);
+        VectorXd gain_d_joint_space = VectorXd::Zero(6);
+
+        // VectorXd gain_p_task_space = VectorXd(3);
+        Vector3d gain_p_task_space;
+        Vector3d gain_d_task_space;
+        Vector3d gain_w_task_space;
 
         VectorXd GetTorque();
         void SetTheta(VectorXd thetas);
+        void SetThetaDot(VectorXd);
         void CalculateRefEEPose();
-        //void OM_joint_states_callback(const sensor_msgs::JointState::ConstPtr &msg);4
+        //void OM_joint_states_callback(const sensor_msgs::JointState::ConstPtr &msg);
         void SetOMTheta(VectorXd thetas);
         void GenerateTorque_JointSpacePD(double deltaT);
         void GenerateTorque_TaskSpacePD();
         void GenerateTrajectory();
+        void GenerateTorque_GravityCompensation();
+        void CalculateJointTheta();
+        void GenerateTorque_VirtualBox();
 
     };
 }

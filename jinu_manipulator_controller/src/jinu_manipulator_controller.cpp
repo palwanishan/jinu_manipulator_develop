@@ -10,16 +10,31 @@
 #include "motor_controller.h"
 #include "std_msgs/Float32.h"
 #include "std_msgs/Float32MultiArray.h"
+#include "std_msgs/Bool.h"
+#include "geometry_msgs/PoseStamped.h"
 
 static void *rt_motion_thread(void *arg);
 pRBCORE_SHM sharedData;
-rmd_motor _DEV_MC[8];
+rmd_motor _DEV_MC[9];
 ROBOT_STATE_DATA ros_data;
 Dynamics::JMDynamics jm_dynamics;
 Motor_Controller motor_ctrl;
 bool first_loop{true};
 VectorXd om_th(6);
 // FILE *Joint_Space_PD_data1;
+
+void HMDTFCallback(const geometry_msgs::PoseStamped::ConstPtr &msg)
+  {
+    jm_dynamics.hmd_position.x() = msg->pose.position.x;
+    jm_dynamics.hmd_position.y() = msg->pose.position.y;
+    jm_dynamics.hmd_position.z() = msg->pose.position.z;
+
+    jm_dynamics.hmd_quaternion.x() = msg->pose.orientation.x;
+    jm_dynamics.hmd_quaternion.y() = msg->pose.orientation.y;
+    jm_dynamics.hmd_quaternion.z() = msg->pose.orientation.z;
+    jm_dynamics.hmd_quaternion.w() = msg->pose.orientation.w;
+  }
+
 
 void joint_states_callback(const sensor_msgs::JointState::ConstPtr &msg){
     
@@ -36,28 +51,40 @@ void joint_states_callback(const sensor_msgs::JointState::ConstPtr &msg){
     jm_dynamics.SetOMTheta(om_th);
 }
 
-void SwitchGainP(const std_msgs::Float32ConstPtr &msg)
-{
-    jm_dynamics.gain_p_joint_space[0] = msg -> data;
-    // jm_dynamics.gain_p_joint_space[1] = msg -> data;
-    // jm_dynamics.gain_p_joint_space[2] = msg -> data;
-    jm_dynamics.gain_p_joint_space[1] = 0.0;
-    jm_dynamics.gain_p_joint_space[2] = 0.0;
-    jm_dynamics.gain_p_joint_space[3] = 1.8;
-    jm_dynamics.gain_p_joint_space[4] = 0.5;
-    jm_dynamics.gain_p_joint_space[5] = 0.3;
+void SwitchGainTaskSpaceP(const std_msgs::Float32MultiArrayConstPtr &msg){
+    jm_dynamics.gain_p_task_space[0] = msg->data.at(0);
+    jm_dynamics.gain_p_task_space[1] = msg->data.at(1);
+    jm_dynamics.gain_p_task_space[2] = msg->data.at(2);
 }
 
-void SwitchGainD(const std_msgs::Float32ConstPtr &msg)
+void SwitchGainTaskSpaceW(const std_msgs::Float32MultiArrayConstPtr &msg){
+    jm_dynamics.gain_w_task_space[0] = msg->data.at(0);
+    jm_dynamics.gain_w_task_space[1] = msg->data.at(1);
+    jm_dynamics.gain_w_task_space[2] = msg->data.at(2);
+}
+
+void SwitchGainP(const std_msgs::Float32MultiArrayConstPtr &msg)
 {
-    jm_dynamics.gain_d_joint_space[0] = msg -> data;
-    // jm_dynamics.gain_d_joint_space[1] = msg -> data;
-    // jm_dynamics.gain_d_joint_space[2] = msg -> data;
-    jm_dynamics.gain_d_joint_space[1] = 0.0;
-    jm_dynamics.gain_d_joint_space[2] = 0.0;
-    jm_dynamics.gain_d_joint_space[3] = 0.2;
-    jm_dynamics.gain_d_joint_space[4] = 0.03;
-    jm_dynamics.gain_d_joint_space[5] = 0.01;
+    jm_dynamics.gain_p_joint_space[0] = msg -> data.at(0);
+    jm_dynamics.gain_p_joint_space[1] = msg -> data.at(1);
+    jm_dynamics.gain_p_joint_space[2] = msg -> data.at(2);
+    jm_dynamics.gain_p_joint_space[3] = msg -> data.at(3);
+    jm_dynamics.gain_p_joint_space[4] = msg -> data.at(4);
+    jm_dynamics.gain_p_joint_space[5] = msg -> data.at(5);
+}
+
+void SwitchGainD(const std_msgs::Float32MultiArrayConstPtr &msg)
+{
+    jm_dynamics.gain_d_joint_space[0] = msg -> data.at(0);
+    jm_dynamics.gain_d_joint_space[1] = msg -> data.at(1);
+    jm_dynamics.gain_d_joint_space[2] = msg -> data.at(2);
+    jm_dynamics.gain_d_joint_space[3] = msg -> data.at(3);
+    jm_dynamics.gain_d_joint_space[4] = msg -> data.at(4);
+    jm_dynamics.gain_d_joint_space[5] = msg -> data.at(5);
+}
+
+void InitializePose(const std_msgs::BoolConstPtr &msg){
+    if(msg->data) for(uint8_t i=3; i<9; i++) _DEV_MC[i].first_loop_updateTheta = true;
 }
 
 int main(int argc, char *argv[])
@@ -75,6 +102,18 @@ int main(int argc, char *argv[])
     gain_p_sub_ = node_handle_.subscribe("st_arm/gain_p", 10, SwitchGainP);
     ros::Subscriber gain_d_sub_;
     gain_d_sub_ = node_handle_.subscribe("st_arm/gain_d", 10, SwitchGainD);
+
+    ros::Subscriber gain_task_space_p_sub_;
+    gain_task_space_p_sub_ = node_handle_.subscribe("st_arm/gain_task_space_p", 10, SwitchGainTaskSpaceP);
+
+    ros::Subscriber gain_task_space_w_sub_;
+    gain_task_space_w_sub_ = node_handle_.subscribe("st_arm/gain_task_space_w", 10, SwitchGainTaskSpaceW);
+
+    ros::Subscriber pose_initializer_sub_;
+    pose_initializer_sub_ = node_handle_.subscribe("st_arm/initialize_pose", 10, InitializePose);
+
+    ros::Subscriber virtual_box_pose_sub_;
+    virtual_box_pose_sub_ = node_handle_.subscribe("unity/virtual_box_pose", 10, HMDTFCallback);
 
     // Joint_Space_PD_data1 = fopen("/home/rainbow/catkin_ws/src/data1.dat","w");
 
@@ -96,11 +135,11 @@ int main(int argc, char *argv[])
         for (uint8_t i = 0; i<6; i ++)
         {
             msg.name.push_back(joints_name.at(i));
-            // msg.position.push_back(jm_dynamics.th[i]);
-            msg.position.push_back(jm_dynamics.th_joint[i]); 
-            msg.velocity.push_back(jm_dynamics.ref_th[i]);
+            msg.position.push_back(jm_dynamics.th[i]);
+            // msg.position.push_back(jm_dynamics.th_joint[i]); 
+            // msg.velocity.push_back(jm_dynamics.ref_th[i]);
             // msg.velocity.push_back(jm_dynamics.om_th[i]);
-            // msg.velocity.push_back(jm_dynamics.th_dot_joint[i]);
+            msg.velocity.push_back(jm_dynamics.th_dot[i]);
             msg.effort.push_back(jm_dynamics.joint_torque[i]);
         }
         jinu_manipulator_joint_states_pub_.publish(msg);
@@ -127,13 +166,23 @@ void *rt_motion_thread(void *arg){
     while(true){
         clock_gettime(CLOCK_REALTIME, &TIME_TIC);
 
-        if(loop_count < 1000002) loop_count++;
+        if(loop_count < 2002) loop_count++;
 
+        // if(loop_count == 1000){
+        //     // motor_ctrl.SetTorque(jm_dynamics.zero_vector_6);
+        // }
         if(!is_first_loop && loop_count > 1000){
-            jm_dynamics.GenerateTrajectory();
-            jm_dynamics.SetTheta(motor_ctrl.GetTheta());
-            jm_dynamics.GenerateTorque_JointSpacePD(1);
+            // jm_dynamics.GenerateTrajectory();
+            // jm_dynamics.SetTheta(motor_ctrl.GetTheta());
+            jm_dynamics.SetTheta(motor_ctrl.GetJointTheta());
+            jm_dynamics.SetThetaDot(motor_ctrl.GetThetaDot());
+            // jm_dynamics.CalculateRefEEPose();
+            // jm_dynamics.GenerateTorque_GravityCompensation();
+            // jm_dynamics.GenerateTorque_TaskSpacePD();
+            jm_dynamics.GenerateTorque_VirtualBox();
+            // jm_dynamics.GenerateTorque_JointSpacePD(1);
             motor_ctrl.SetTorque(jm_dynamics.GetTorque());
+            // motor_ctrl.SetTorque(jm_dynamics.zero_vector_6);
 
             // fprintf(Joint_Space_PD_data1, "%lf %lf %lf \n", jm_dynamics.th_joint[0], jm_dynamics.ref_th[0], jm_dynamics.joint_torque[0]);         
             // if(loop_count > 1000000) fclose(Joint_Space_PD_data1);
@@ -144,7 +193,7 @@ void *rt_motion_thread(void *arg){
 
         if(is_first_loop){
             motor_ctrl.EnableMotor();
-            timespec_add_us(&TIME_NEXT, 5 * 1000 * 1000);
+            timespec_add_us(&TIME_NEXT, 4 * 1000 * 1000);
             is_first_loop = false;
         }
         
@@ -155,5 +204,3 @@ void *rt_motion_thread(void *arg){
         }
     }
 }
-
-
